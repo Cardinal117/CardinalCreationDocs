@@ -976,6 +976,20 @@ code {
 
 .content-grid.reader-wide {
   grid-template-columns: minmax(0, 1fr);
+  position: relative;
+  z-index: 15;
+}
+
+.content-grid.reader-wide::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 22%, rgba(88, 216, 255, 0.12), transparent 34%),
+    rgba(0, 0, 0, 0.64);
+  backdrop-filter: blur(5px) saturate(0.75);
 }
 
 .content-grid.reader-wide .doc-browser,
@@ -987,6 +1001,12 @@ code {
   max-width: 1180px;
   width: 100%;
   margin: 0 auto;
+  position: relative;
+  z-index: 1;
+  border-color: rgba(88, 216, 255, 0.28);
+  box-shadow:
+    0 36px 90px rgba(0, 0, 0, 0.58),
+    0 0 70px rgba(88, 216, 255, 0.12);
 }
 
 .doc-browser,
@@ -1005,6 +1025,27 @@ code {
   padding: 16px;
   position: sticky;
   top: 18px;
+  max-height: calc(100vh - 36px);
+  overflow: auto;
+  scrollbar-color: rgba(88, 216, 255, 0.38) rgba(255, 255, 255, 0.05);
+  scrollbar-width: thin;
+}
+
+.doc-browser::-webkit-scrollbar,
+.toc-panel::-webkit-scrollbar {
+  width: 10px;
+}
+
+.doc-browser::-webkit-scrollbar-track,
+.toc-panel::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.doc-browser::-webkit-scrollbar-thumb,
+.toc-panel::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(18, 24, 27, 0.88);
+  border-radius: 999px;
+  background: linear-gradient(var(--blue), rgba(255, 78, 95, 0.7));
 }
 
 .section-head {
@@ -1518,6 +1559,8 @@ pre {
   .toc-panel {
     grid-column: 1 / -1;
     position: static;
+    max-height: none;
+    overflow: visible;
   }
 }
 
@@ -1560,6 +1603,8 @@ pre {
   .doc-browser,
   .toc-panel {
     position: static;
+    max-height: none;
+    overflow: visible;
   }
 }
 

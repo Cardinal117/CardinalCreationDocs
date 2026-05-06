@@ -471,6 +471,29 @@ function App() {
     };
   }, [docs]);
 
+  useEffect(() => {
+    const handleReaderShortcuts = (event) => {
+      const target = event.target;
+      const isTyping =
+        target instanceof HTMLElement &&
+        (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
+
+      if (isTyping || event.ctrlKey || event.metaKey || event.altKey || page !== "archive") return;
+
+      if (event.key.toLowerCase() === "f") {
+        event.preventDefault();
+        setReaderWide(true);
+      }
+
+      if (event.key === "Escape") {
+        setReaderWide(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleReaderShortcuts);
+    return () => window.removeEventListener("keydown", handleReaderShortcuts);
+  }, [page]);
+
   const enrichedDocs = useMemo(
     () => docs.map((doc) => ({ ...doc, category: docCategory(doc) })),
     [docs]
@@ -719,9 +742,9 @@ function App() {
               <div className="reader-header">
                 <span className="reader-icon"><SelectedIcon size={22} /></span>
                 <div><p className="eyebrow">{selectedCategory.label}</p><h2>{selectedDoc.title}</h2><span>{selectedDoc.file}</span></div>
-                <button className="reader-toggle" type="button" onClick={() => setReaderWide((value) => !value)} title={readerWide ? "Return to normal reader width" : "Widen reader panel"}>
+                <button className="reader-toggle" type="button" onClick={() => setReaderWide((value) => !value)} title={readerWide ? "Return to normal reader width (Esc)" : "Widen reader panel (F)"}>
                   {readerWide ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
-                  <span>{readerWide ? "Normal" : "Focus"}</span>
+                  <span>{readerWide ? "Normal Esc" : "Focus F"}</span>
                 </button>
               </div>
               <div
