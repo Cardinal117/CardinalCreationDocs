@@ -15,9 +15,13 @@ import {
   Globe2,
   Image,
   Layers3,
+  Maximize2,
   Menu,
+  Minimize2,
   Moon,
   Network,
+  PanelLeftClose,
+  PanelLeftOpen,
   PlayCircle,
   Radio,
   Rocket,
@@ -401,6 +405,8 @@ function App() {
   const [selectedFile, setSelectedFile] = useState("");
   const [page, setPage] = useState(getPageFromLocation);
   const [activeRoadmap, setActiveRoadmap] = useState(0);
+  const [sidebarCompact, setSidebarCompact] = useState(false);
+  const [readerWide, setReaderWide] = useState(false);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [indexMarkdown, setIndexMarkdown] = useState("");
@@ -499,6 +505,10 @@ function App() {
     setSidebarOpen(false);
     window.history.pushState(null, "", route);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const toggleSidebarCompact = () => {
+    setSidebarCompact((value) => !value);
   };
 
   const copyDocLink = async () => {
@@ -668,7 +678,7 @@ function App() {
         <div className="vial-stack" aria-label="Archive status"><div className="vial red"><span /></div><div className="vial blue"><span /></div></div>
       </section>
 
-      <section className="content-grid">
+      <section className={`content-grid ${readerWide ? "reader-wide" : ""}`}>
         <div className="doc-browser">
           <div className="section-head">
             <div><p className="eyebrow">Archive</p><h2>{filteredDocs.length} documents</h2></div>
@@ -709,6 +719,10 @@ function App() {
               <div className="reader-header">
                 <span className="reader-icon"><SelectedIcon size={22} /></span>
                 <div><p className="eyebrow">{selectedCategory.label}</p><h2>{selectedDoc.title}</h2><span>{selectedDoc.file}</span></div>
+                <button className="reader-toggle" type="button" onClick={() => setReaderWide((value) => !value)} title={readerWide ? "Return to normal reader width" : "Widen reader panel"}>
+                  {readerWide ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
+                  <span>{readerWide ? "Normal" : "Focus"}</span>
+                </button>
               </div>
               <div
                 className="markdown-body"
@@ -745,7 +759,7 @@ function App() {
   );
 
   return (
-    <div className="archive-app">
+    <div className={`archive-app ${sidebarCompact ? "rail-compact" : ""}`}>
       <div className="space-grid" aria-hidden="true" />
       <aside className={`side-rail ${sidebarOpen ? "open" : ""}`}>
         <button className="close-nav" type="button" onClick={() => setSidebarOpen(false)} aria-label="Close navigation">
@@ -759,13 +773,18 @@ function App() {
           </div>
         </div>
 
+        <button className="rail-toggle" type="button" onClick={toggleSidebarCompact} title={sidebarCompact ? "Expand sidebar" : "Collapse sidebar"}>
+          {sidebarCompact ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+          <span>{sidebarCompact ? "Expand" : "Collapse"}</span>
+        </button>
+
         <div className="site-nav">
           {sitePages.map((item) => {
             const Icon = item.icon;
             return (
-              <button className={page === item.key ? "active" : ""} type="button" key={item.key} onClick={() => openPage(item.key)}>
+              <button className={page === item.key ? "active" : ""} type="button" key={item.key} onClick={() => openPage(item.key)} title={item.label} data-tip={item.label}>
                 <Icon size={17} />
-                {item.label}
+                <span>{item.label}</span>
               </button>
             );
           })}
@@ -778,16 +797,16 @@ function App() {
 
         <div className="category-list">
           <p className="rail-label">Archive Filters</p>
-          <button className={category === "all" ? "active" : ""} type="button" onClick={() => setCategory("all")}>
+          <button className={category === "all" ? "active" : ""} type="button" onClick={() => setCategory("all")} title="All Systems" data-tip="All Systems">
             <Layers3 size={17} />
-            All Systems
+            <span>All Systems</span>
           </button>
           {categoryRules.map((rule) => {
             const Icon = rule.icon;
             return (
-              <button className={category === rule.key ? "active" : ""} type="button" key={rule.key} onClick={() => setCategory(rule.key)}>
+              <button className={category === rule.key ? "active" : ""} type="button" key={rule.key} onClick={() => setCategory(rule.key)} title={rule.label} data-tip={rule.label}>
                 <Icon size={17} />
-                {rule.label}
+                <span>{rule.label}</span>
               </button>
             );
           })}

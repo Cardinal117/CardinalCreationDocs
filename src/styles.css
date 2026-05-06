@@ -90,6 +90,22 @@ a {
   z-index: 5;
   overflow-y: auto;
   overscroll-behavior: contain;
+  scrollbar-color: rgba(88, 216, 255, 0.38) rgba(255, 255, 255, 0.05);
+  scrollbar-width: thin;
+}
+
+.side-rail::-webkit-scrollbar {
+  width: 10px;
+}
+
+.side-rail::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.side-rail::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(9, 12, 14, 0.88);
+  border-radius: 999px;
+  background: linear-gradient(var(--blue), rgba(255, 78, 95, 0.7));
 }
 
 .close-nav,
@@ -126,6 +142,19 @@ a {
   border-radius: 8px;
   background: #050607;
   box-shadow: 0 0 28px rgba(255, 255, 255, 0.08);
+}
+
+.rail-toggle {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
 }
 
 .search-box {
@@ -197,6 +226,39 @@ a {
   text-transform: uppercase;
 }
 
+.site-nav button,
+.category-list button {
+  position: relative;
+}
+
+.site-nav button::after,
+.category-list button::after,
+.rail-toggle::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: calc(100% + 14px);
+  top: 50%;
+  z-index: 30;
+  min-width: max-content;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  color: var(--text);
+  background: rgba(8, 11, 13, 0.96);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%) translateX(-6px);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.rail-compact .site-nav button:hover::after,
+.rail-compact .category-list button:hover::after,
+.rail-compact .rail-toggle:hover::after {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
 .site-nav button:hover,
 .site-nav button.active,
 .category-list button:hover,
@@ -238,6 +300,49 @@ code {
   z-index: 1;
   margin-left: 300px;
   padding: 28px;
+}
+
+.rail-compact .side-rail {
+  width: 92px;
+  padding: 20px 14px;
+  align-items: center;
+}
+
+.rail-compact .workspace {
+  margin-left: 92px;
+}
+
+.rail-compact .brand {
+  justify-content: center;
+}
+
+.rail-compact .brand-logo {
+  width: 58px;
+  height: 58px;
+}
+
+.rail-compact .brand div,
+.rail-compact .search-box,
+.rail-compact .rail-label,
+.rail-compact .rail-footer,
+.rail-compact .site-nav button span,
+.rail-compact .category-list button span,
+.rail-compact .rail-toggle span {
+  display: none;
+}
+
+.rail-compact .site-nav,
+.rail-compact .category-list {
+  width: 100%;
+}
+
+.rail-compact .site-nav button,
+.rail-compact .category-list button,
+.rail-compact .rail-toggle {
+  width: 52px;
+  min-height: 52px;
+  justify-content: center;
+  padding: 0;
 }
 
 .topbar {
@@ -869,6 +974,21 @@ code {
   align-items: start;
 }
 
+.content-grid.reader-wide {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.content-grid.reader-wide .doc-browser,
+.content-grid.reader-wide .toc-panel {
+  display: none;
+}
+
+.content-grid.reader-wide .reader-panel {
+  max-width: 1180px;
+  width: 100%;
+  margin: 0 auto;
+}
+
 .doc-browser,
 .reader-panel,
 .toc-panel,
@@ -1025,6 +1145,29 @@ code {
   padding-bottom: 18px;
   margin-bottom: 8px;
   border-bottom: 1px solid var(--line);
+}
+
+.reader-header > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.reader-toggle {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--soft);
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+}
+
+.reader-toggle:hover {
+  border-color: rgba(88, 216, 255, 0.42);
+  background: rgba(88, 216, 255, 0.08);
 }
 
 .reader-header span {
@@ -1308,6 +1451,35 @@ pre {
 
   .workspace {
     margin-left: 0;
+  }
+
+  .rail-compact .workspace {
+    margin-left: 0;
+  }
+
+  .rail-compact .side-rail {
+    width: min(340px, calc(100vw - 34px));
+    align-items: stretch;
+    padding: 26px;
+  }
+
+  .rail-compact .brand div,
+  .rail-compact .search-box,
+  .rail-compact .rail-label,
+  .rail-compact .rail-footer,
+  .rail-compact .site-nav button span,
+  .rail-compact .category-list button span,
+  .rail-compact .rail-toggle span {
+    display: initial;
+  }
+
+  .rail-compact .site-nav button,
+  .rail-compact .category-list button,
+  .rail-compact .rail-toggle {
+    width: auto;
+    min-height: 42px;
+    justify-content: flex-start;
+    padding: 0 12px;
   }
 
   .side-rail.open {
