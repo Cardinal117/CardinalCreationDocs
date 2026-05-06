@@ -400,6 +400,84 @@ function referenceItems(indexMarkdown) {
   return refs;
 }
 
+function getPreviewType(file = "") {
+  if (file === "COMBAT_MAGIC.md") return "magic";
+  if (file === "COMBAT_MELEE.md") return "melee";
+  if (file === "COMBAT_RANGED.md") return "ranged";
+  if (file === "DIEGETIC_UI_CARDINAL_AND_VITAE.md") return "ui";
+  return "";
+}
+
+function MotionPreview({ type }) {
+  if (!type) return null;
+
+  const labels = {
+    magic: ["Grimoire Ring", "Pages orbit, spell locks, staff releases."],
+    melee: ["Stance Art", "Guard position charges into a slash arc."],
+    ranged: ["Curved Recall", "Arrow bends, lands, then recalls to the bow."],
+    ui: ["Vitae Glove", "Vials sway while the cardinal opens the pocket UI."]
+  };
+
+  return (
+    <div className={`motion-preview motion-${type}`}>
+      <div className="section-head compact">
+        <div>
+          <p className="eyebrow">Motion preview</p>
+          <h2>{labels[type][0]}</h2>
+        </div>
+        <Sparkles size={18} />
+      </div>
+      <div className="motion-stage" aria-label={`${labels[type][0]} animation`}>
+        {type === "magic" && (
+          <svg viewBox="0 0 220 220" role="img">
+            <circle className="mp-ring" cx="110" cy="110" r="58" />
+            {[0, 1, 2, 3, 4, 5].map((item) => (
+              <rect className="mp-page" key={item} x="100" y="34" width="20" height="34" rx="3" style={{ "--i": item }} />
+            ))}
+            <path className="mp-staff" d="M36 180 L86 130" />
+            <circle className="mp-spark" cx="110" cy="110" r="7" />
+            <path className="mp-beam" d="M116 104 C142 82 168 72 196 56" />
+          </svg>
+        )}
+
+        {type === "melee" && (
+          <svg viewBox="0 0 220 220" role="img">
+            <path className="mp-body" d="M96 160 L110 112 L132 160" />
+            <path className="mp-sword" d="M76 74 L144 142" />
+            <path className="mp-arc" d="M50 150 C88 44 168 40 192 126" />
+            <circle className="mp-charge" cx="110" cy="112" r="26" />
+          </svg>
+        )}
+
+        {type === "ranged" && (
+          <svg viewBox="0 0 220 220" role="img">
+            <path className="mp-bow" d="M58 58 C28 104 30 146 62 184" />
+            <line className="mp-string" x1="58" y1="58" x2="62" y2="184" />
+            <path className="mp-arrow-path" d="M62 122 C108 64 156 82 184 126" />
+            <path className="mp-recall" d="M184 126 C140 158 102 164 62 122" />
+            <polygon className="mp-arrow" points="0,-6 18,0 0,6 4,0" />
+            <circle className="mp-landing" cx="184" cy="126" r="18" />
+          </svg>
+        )}
+
+        {type === "ui" && (
+          <svg viewBox="0 0 220 220" role="img">
+            <path className="mp-arm" d="M34 110 C72 126 112 126 152 108" />
+            <rect className="mp-glove" x="124" y="82" width="44" height="56" rx="12" />
+            <path className="mp-chain" d="M138 136 C132 154 128 164 124 180" />
+            <path className="mp-chain two" d="M156 136 C164 154 168 164 172 180" />
+            <path className="mp-vial red-vial" d="M112 176 L136 176 L128 204 L120 204 Z" />
+            <path className="mp-vial blue-vial" d="M160 176 L184 176 L176 204 L168 204 Z" />
+            <path className="mp-bird" d="M58 70 C80 50 104 62 116 82 C94 82 78 90 58 70 Z" />
+            <circle className="mp-pocket" cx="82" cy="94" r="42" />
+          </svg>
+        )}
+      </div>
+      <p>{labels[type][1]}</p>
+    </div>
+  );
+}
+
 function App() {
   const [docs, setDocs] = useState([]);
   const [selectedFile, setSelectedFile] = useState("");
@@ -513,6 +591,7 @@ function App() {
   const references = useMemo(() => referenceItems(indexMarkdown), [indexMarkdown]);
   const selectedCategory = selectedDoc ? docCategory(selectedDoc) : categoryRules[0];
   const SelectedIcon = selectedCategory.icon;
+  const previewType = getPreviewType(selectedDoc?.file);
 
   const openDoc = (file) => {
     setSelectedFile(file);
@@ -775,6 +854,7 @@ function App() {
           ) : (
             <p className="empty-note">Open a document to reveal its sections.</p>
           )}
+          <MotionPreview type={previewType} />
           <div className="mini-system"><Boxes size={18} /><strong>Archive loop</strong><p>Add docs, update the index, push to GitHub Pages, share the link.</p></div>
         </aside>
       </section>
