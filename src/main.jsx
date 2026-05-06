@@ -4,6 +4,7 @@ import {
   Archive,
   BookOpen,
   Boxes,
+  Calendar,
   ChevronRight,
   Compass,
   Copy,
@@ -17,9 +18,13 @@ import {
   Menu,
   Moon,
   Network,
+  PlayCircle,
+  Radio,
+  Rocket,
   Search,
   Shield,
   Sparkles,
+  ScrollText,
   Swords,
   Wand2,
   X
@@ -48,6 +53,79 @@ const docRoutes = {
 };
 
 const routeDocs = Object.fromEntries(Object.entries(docRoutes).map(([file, slug]) => [slug, file]));
+
+const sitePages = [
+  { key: "home", path: "/", label: "Home", icon: Sparkles },
+  { key: "archive", path: "/archive", label: "Design Archive", icon: Archive },
+  { key: "devlogs", path: "/devlogs", label: "Dev Logs", icon: Radio },
+  { key: "roadmap", path: "/roadmap", label: "Roadmap", icon: Rocket }
+];
+
+const devlogEntries = [
+  {
+    title: "Foundation Notes",
+    date: "May 2026",
+    tag: "Design",
+    text: "The archive begins with combat pillars, diegetic UI, world scale, spellstones, demon eyes, and the first pass of the Cardinal Creation site."
+  },
+  {
+    title: "Prototype Target",
+    date: "Upcoming",
+    tag: "Build",
+    text: "Next dev logs can track the first Unreal movement slice, grimoire interaction tests, stance detection, and ranged recall experiments."
+  },
+  {
+    title: "Media Slot",
+    date: "Later",
+    tag: "Video",
+    text: "YouTube trailers, short clips, prototype captures, and commentary videos can be linked here once the channel is ready."
+  }
+];
+
+const roadmapItems = [
+  {
+    phase: "Phase 0",
+    title: "Research And Validation",
+    status: "Current",
+    icon: Compass,
+    points: ["UE 5.7 VR rendering validation", "SpacetimeDB Unreal integration", "World scale performance tests"]
+  },
+  {
+    phase: "Phase 1",
+    title: "Movement And Interface Slice",
+    status: "Next",
+    icon: Sparkles,
+    points: ["VR pawn", "Cardinal familiar pocket UI", "Vitae glove and vial charms"]
+  },
+  {
+    phase: "Phase 2",
+    title: "Combat Prototype",
+    status: "Planned",
+    icon: Swords,
+    points: ["Sword stances", "Grimoire spell ring", "Bow recall crystal and curve shots"]
+  },
+  {
+    phase: "Phase 3",
+    title: "Network Prototype",
+    status: "Planned",
+    icon: Network,
+    points: ["Nearby player subscriptions", "Remote avatar smoothing", "Cell interest management"]
+  },
+  {
+    phase: "Phase 4",
+    title: "World Scale Prototype",
+    status: "Planned",
+    icon: Globe2,
+    points: ["8-16 km test world", "HLOD and far proxies", "Nanite foliage test fields"]
+  },
+  {
+    phase: "Phase 5",
+    title: "Progression Slice",
+    status: "Planned",
+    icon: Gem,
+    points: ["Spellstone series", "Dwarven crafting", "Demon eye social consequence"]
+  }
+];
 
 const fallbackDocs = [
   "VRMMO_DESIGN_BLUEPRINT.md",
@@ -181,6 +259,15 @@ function getFileFromLocation(docs = []) {
   return directFile?.file ?? "";
 }
 
+function getPageFromLocation() {
+  const path = window.location.pathname.replace(/\/+$/, "") || "/";
+  if (path.startsWith("/doc/")) return "archive";
+  if (path === "/archive") return "archive";
+  if (path === "/devlogs") return "devlogs";
+  if (path === "/roadmap") return "roadmap";
+  return "home";
+}
+
 function renderTable(lines) {
   const rows = lines
     .filter((line) => !/^\|\s*:?-{3,}/.test(line))
@@ -312,6 +399,8 @@ function referenceItems(indexMarkdown) {
 function App() {
   const [docs, setDocs] = useState([]);
   const [selectedFile, setSelectedFile] = useState("");
+  const [page, setPage] = useState(getPageFromLocation);
+  const [activeRoadmap, setActiveRoadmap] = useState(0);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [indexMarkdown, setIndexMarkdown] = useState("");
@@ -340,6 +429,7 @@ function App() {
       setDocs(loaded);
       const requested = getFileFromLocation(loaded);
       setSelectedFile(requested && loaded.some((doc) => doc.file === requested) ? requested : loaded[0]?.file ?? "");
+      setPage(getPageFromLocation());
     }
 
     loadDocs().catch(() => {
@@ -350,7 +440,7 @@ function App() {
   const selectedDoc = docs.find((doc) => doc.file === selectedFile) ?? docs[0];
 
   useEffect(() => {
-    if (selectedDoc) {
+    if (selectedDoc && page === "archive" && window.location.pathname.startsWith("/doc/")) {
       const expectedPath = getDocPath(selectedDoc.file);
       if (window.location.pathname !== expectedPath) {
         window.history.replaceState(null, "", expectedPath);
@@ -360,6 +450,7 @@ function App() {
 
   useEffect(() => {
     const syncFromLocation = () => {
+      setPage(getPageFromLocation());
       const requested = getFileFromLocation(docs);
       if (requested && docs.some((doc) => doc.file === requested)) {
         setSelectedFile(requested);
@@ -396,8 +487,17 @@ function App() {
 
   const openDoc = (file) => {
     setSelectedFile(file);
+    setPage("archive");
     setSidebarOpen(false);
     window.history.pushState(null, "", getDocPath(file));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const openPage = (targetPage) => {
+    const route = sitePages.find((item) => item.key === targetPage)?.path ?? "/";
+    setPage(targetPage);
+    setSidebarOpen(false);
+    window.history.pushState(null, "", route);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -406,6 +506,243 @@ function App() {
     const url = `${window.location.origin}${getDocPath(selectedDoc.file)}`;
     await navigator.clipboard?.writeText(url);
   };
+
+  const renderHome = () => (
+    <>
+      <section className="home-hero">
+        <div className="home-map-stack" aria-hidden="true">
+          <img src={realmColorSrc} alt="" />
+          <img src={realmSketchSrc} alt="" />
+          <div className="portal-core">
+            <span />
+            <span />
+            <span />
+          </div>
+        </div>
+        <div className="home-copy">
+          <p className="eyebrow">Mistake Studios flagship hub</p>
+          <h2>Cardinal Creation is becoming a living VRMMO atlas.</h2>
+          <p>
+            A public home for trailers, dev logs, roadmap beats, lore archives, and the design codex as the project grows from planning into prototypes.
+          </p>
+          <div className="home-actions">
+            <button className="primary-link" type="button" onClick={() => openPage("archive")}>
+              <Archive size={18} />
+              Open Archive
+            </button>
+            <button className="ghost-button" type="button" onClick={() => openPage("roadmap")}>
+              <Rocket size={18} />
+              View Roadmap
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="portal-grid">
+        {[
+          { page: "archive", title: "Design Archive", text: "Read the planning docs, lore systems, combat pillars, and technical notes.", icon: Archive },
+          { page: "devlogs", title: "Dev Logs", text: "A future home for videos, prototype notes, trailers, and development updates.", icon: PlayCircle },
+          { page: "roadmap", title: "Roadmap", text: "Track phases from research through combat, networking, world scale, and progression.", icon: Rocket }
+        ].map((item) => {
+          const Icon = item.icon;
+          return (
+            <button className="portal-card" type="button" key={item.page} onClick={() => openPage(item.page)}>
+              <span><Icon size={24} /></span>
+              <strong>{item.title}</strong>
+              <small>{item.text}</small>
+              <ChevronRight size={18} />
+            </button>
+          );
+        })}
+      </section>
+
+      <section className="signal-band">
+        <div>
+          <p className="eyebrow">Current identity</p>
+          <h2>Power is physical, visible, crafted, and consequential.</h2>
+        </div>
+        <div className="signal-lines" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </div>
+      </section>
+    </>
+  );
+
+  const renderDevlogs = () => (
+    <>
+      <section className="page-hero compact-hero">
+        <p className="eyebrow">Development updates</p>
+        <h2>Dev logs will live here when the first prototypes start moving.</h2>
+        <p>Keep this simple for now: entries, embedded video slots later, and links to YouTube or supporter posts when they exist.</p>
+      </section>
+      <section className="devlog-list">
+        {devlogEntries.map((entry) => (
+          <article className="devlog-card" key={entry.title}>
+            <div>
+              <span>{entry.tag}</span>
+              <time>{entry.date}</time>
+            </div>
+            <h3>{entry.title}</h3>
+            <p>{entry.text}</p>
+            <div className="video-placeholder">
+              <PlayCircle size={28} />
+              Future video / trailer embed
+            </div>
+          </article>
+        ))}
+      </section>
+    </>
+  );
+
+  const renderRoadmap = () => {
+    const active = roadmapItems[activeRoadmap];
+    const ActiveIcon = active.icon;
+    return (
+      <>
+        <section className="page-hero compact-hero">
+          <p className="eyebrow">Interactive roadmap</p>
+          <h2>From research notes to a playable VRMMO vertical slice.</h2>
+          <p>Select a phase to inspect the work track. This can later become a public progress board with dates, videos, and status updates.</p>
+        </section>
+        <section className="roadmap-shell">
+          <div className="roadmap-orbit" aria-hidden="true">
+            {roadmapItems.map((item, index) => (
+              <button
+                className={`road-node ${activeRoadmap === index ? "active" : ""}`}
+                type="button"
+                key={item.phase}
+                style={{ "--i": index }}
+                onClick={() => setActiveRoadmap(index)}
+                aria-label={item.title}
+              >
+                {index + 1}
+              </button>
+            ))}
+          </div>
+          <div className="roadmap-detail">
+            <span className="reader-icon"><ActiveIcon size={24} /></span>
+            <p className="eyebrow">{active.phase} / {active.status}</p>
+            <h2>{active.title}</h2>
+            <ul>
+              {active.points.map((point) => (
+                <li key={point}>{point}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="roadmap-timeline">
+            {roadmapItems.map((item, index) => (
+              <button className={activeRoadmap === index ? "active" : ""} type="button" key={item.phase} onClick={() => setActiveRoadmap(index)}>
+                <span>{item.phase}</span>
+                <strong>{item.title}</strong>
+                <small>{item.status}</small>
+              </button>
+            ))}
+          </div>
+        </section>
+      </>
+    );
+  };
+
+  const renderArchive = () => (
+    <>
+      <section className="hero-console">
+        <div className="orbital-stage" aria-hidden="true">
+          <div className="vr-ring ring-one" />
+          <div className="vr-ring ring-two" />
+          <div className="floating-panel panel-a"><BookOpen size={18} /></div>
+          <div className="floating-panel panel-b"><Crosshair size={18} /></div>
+          <div className="floating-panel panel-c"><Wand2 size={18} /></div>
+          <div className="cardinal"><span className="wing wing-left" /><span className="wing wing-right" /><span className="body" /></div>
+        </div>
+        <div className="hero-copy">
+          <p className="eyebrow">Living source of truth</p>
+          <h2>Docs, maps, references, and system ideas in one spatial workspace.</h2>
+          <p>Update the markdown files and keep <code>VRMMO_INDEX.md</code> fresh. The archive turns those links into navigation, search, cards, and shareable pages.</p>
+        </div>
+        <div className="realm-preview" aria-label="Human realm visual references">
+          <img src={realmColorSrc} alt="Human overworld realm color reference" />
+          <img src={realmSketchSrc} alt="Human overworld realm sketch map reference" />
+        </div>
+        <div className="vial-stack" aria-label="Archive status"><div className="vial red"><span /></div><div className="vial blue"><span /></div></div>
+      </section>
+
+      <section className="content-grid">
+        <div className="doc-browser">
+          <div className="section-head">
+            <div><p className="eyebrow">Archive</p><h2>{filteredDocs.length} documents</h2></div>
+            <span>{category === "all" ? "All categories" : categoryRules.find((rule) => rule.key === category)?.label}</span>
+          </div>
+
+          <div className="doc-cards">
+            {filteredDocs.map((doc) => {
+              const docRule = doc.category;
+              const Icon = docRule.icon;
+              return (
+                <button className={`doc-card ${selectedDoc?.file === doc.file ? "selected" : ""}`} type="button" key={doc.file} onClick={() => openDoc(doc.file)}>
+                  <span className="doc-icon"><Icon size={18} /></span>
+                  <span><strong>{doc.title}</strong><small>{doc.summary}</small></span>
+                  <ChevronRight size={17} />
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="reference-dock">
+            <div className="section-head compact"><div><p className="eyebrow">Reference shelf</p><h2>Images</h2></div><Image size={18} /></div>
+            {references.length ? (
+              <div className="reference-list">
+                {references.map((ref) => (
+                  <a key={ref.src} href={ref.src} target="_blank" rel="noreferrer"><img src={ref.src} alt="" /><span><Image size={15} />{ref.title}</span></a>
+                ))}
+              </div>
+            ) : (
+              <p className="empty-note">Add image links to <code>VRMMO_INDEX.md</code> and place files in a references folder to populate this shelf.</p>
+            )}
+          </div>
+        </div>
+
+        <article className="reader-panel">
+          {selectedDoc ? (
+            <>
+              <div className="reader-header">
+                <span className="reader-icon"><SelectedIcon size={22} /></span>
+                <div><p className="eyebrow">{selectedCategory.label}</p><h2>{selectedDoc.title}</h2><span>{selectedDoc.file}</span></div>
+              </div>
+              <div
+                className="markdown-body"
+                onClick={(event) => {
+                  const link = event.target.closest("a");
+                  if (!link) return;
+                  const href = link.getAttribute("href") ?? "";
+                  if (!href.startsWith("/doc/")) return;
+                  const slug = decodeURIComponent(href.replace("/doc/", "").replace(/\/$/, ""));
+                  const file = routeDocs[slug] ?? "";
+                  if (!docs.some((doc) => doc.file === file)) return;
+                  event.preventDefault();
+                  openDoc(file);
+                }}
+                dangerouslySetInnerHTML={{ __html: renderMarkdown(selectedDoc.markdown) }}
+              />
+            </>
+          ) : (
+            <div className="loading-state"><Moon size={28} />Loading archive...</div>
+          )}
+        </article>
+
+        <aside className="toc-panel">
+          <div className="section-head compact"><div><p className="eyebrow">Current doc</p><h2>Table of contents</h2></div><Shield size={18} /></div>
+          {selectedDoc?.toc?.length ? (
+            <nav>{selectedDoc.toc.map((item) => <a className={item.depth === 3 ? "sub" : ""} href={`#${slugify(item.label)}`} key={`${item.depth}-${item.label}`}>{item.label}</a>)}</nav>
+          ) : (
+            <p className="empty-note">Open a document to reveal its sections.</p>
+          )}
+          <div className="mini-system"><Boxes size={18} /><strong>Archive loop</strong><p>Add docs, update the index, push to GitHub Pages, share the link.</p></div>
+        </aside>
+      </section>
+    </>
+  );
 
   return (
     <div className="archive-app">
@@ -418,8 +755,20 @@ function App() {
           <img className="brand-logo" src={logoSrc} alt="Cardinal Creation logo" />
           <div>
             <p>Cardinal Creation</p>
-            <strong>Design Archive</strong>
+            <strong>Mistake Studios</strong>
           </div>
+        </div>
+
+        <div className="site-nav">
+          {sitePages.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button className={page === item.key ? "active" : ""} type="button" key={item.key} onClick={() => openPage(item.key)}>
+                <Icon size={17} />
+                {item.label}
+              </button>
+            );
+          })}
         </div>
 
         <label className="search-box">
@@ -428,6 +777,7 @@ function App() {
         </label>
 
         <div className="category-list">
+          <p className="rail-label">Archive Filters</p>
           <button className={category === "all" ? "active" : ""} type="button" onClick={() => setCategory("all")}>
             <Layers3 size={17} />
             All Systems
@@ -455,179 +805,24 @@ function App() {
             <Menu size={20} />
           </button>
           <div>
-            <p className="eyebrow">Static GitHub Pages archive</p>
-            <h1>Cardinal Creation Design Library</h1>
+            <p className="eyebrow">{page === "home" ? "Flagship hub" : page === "devlogs" ? "Studio updates" : page === "roadmap" ? "Build path" : "Static GitHub Pages archive"}</p>
+            <h1>{page === "home" ? "Mistake Studios" : page === "devlogs" ? "Dev Logs" : page === "roadmap" ? "Roadmap" : "Cardinal Creation Design Library"}</h1>
           </div>
           <div className="top-actions">
-            <a className="ghost-button" href={`${docsRoot}${selectedDoc?.file ?? indexFile}`} target="_blank" rel="noreferrer">
+            {page === "archive" && <a className="ghost-button" href={`${docsRoot}${selectedDoc?.file ?? indexFile}`} target="_blank" rel="noreferrer">
               <FileText size={17} />
               Source
-            </a>
-            <button className="ghost-button" type="button" onClick={copyDocLink}>
+            </a>}
+            {page === "archive" && <button className="ghost-button" type="button" onClick={copyDocLink}>
               <Copy size={17} />
               Share
-            </button>
+            </button>}
           </div>
         </header>
-
-        <section className="hero-console">
-          <div className="orbital-stage" aria-hidden="true">
-            <div className="vr-ring ring-one" />
-            <div className="vr-ring ring-two" />
-            <div className="floating-panel panel-a">
-              <BookOpen size={18} />
-            </div>
-            <div className="floating-panel panel-b">
-              <Crosshair size={18} />
-            </div>
-            <div className="floating-panel panel-c">
-              <Wand2 size={18} />
-            </div>
-            <div className="cardinal">
-              <span className="wing wing-left" />
-              <span className="wing wing-right" />
-              <span className="body" />
-            </div>
-          </div>
-          <div className="hero-copy">
-            <p className="eyebrow">Living source of truth</p>
-            <h2>Docs, maps, references, and system ideas in one spatial workspace.</h2>
-            <p>
-              Update the markdown files and keep <code>VRMMO_INDEX.md</code> fresh. The archive turns those links into navigation, search, cards, and shareable pages.
-            </p>
-          </div>
-          <div className="realm-preview" aria-label="Human realm visual references">
-            <img src={realmColorSrc} alt="Human overworld realm color reference" />
-            <img src={realmSketchSrc} alt="Human overworld realm sketch map reference" />
-          </div>
-          <div className="vial-stack" aria-label="Archive status">
-            <div className="vial red"><span /></div>
-            <div className="vial blue"><span /></div>
-          </div>
-        </section>
-
-        <section className="content-grid">
-          <div className="doc-browser">
-            <div className="section-head">
-              <div>
-                <p className="eyebrow">Archive</p>
-                <h2>{filteredDocs.length} documents</h2>
-              </div>
-              <span>{category === "all" ? "All categories" : categoryRules.find((rule) => rule.key === category)?.label}</span>
-            </div>
-
-            <div className="doc-cards">
-              {filteredDocs.map((doc) => {
-                const docRule = doc.category;
-                const Icon = docRule.icon;
-                return (
-                  <button
-                    className={`doc-card ${selectedDoc?.file === doc.file ? "selected" : ""}`}
-                    type="button"
-                    key={doc.file}
-                    onClick={() => openDoc(doc.file)}
-                  >
-                    <span className="doc-icon"><Icon size={18} /></span>
-                    <span>
-                      <strong>{doc.title}</strong>
-                      <small>{doc.summary}</small>
-                    </span>
-                    <ChevronRight size={17} />
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="reference-dock">
-              <div className="section-head compact">
-                <div>
-                  <p className="eyebrow">Reference shelf</p>
-                  <h2>Images</h2>
-                </div>
-                <Image size={18} />
-              </div>
-              {references.length ? (
-                <div className="reference-list">
-                  {references.map((ref) => (
-                    <a key={ref.src} href={ref.src} target="_blank" rel="noreferrer">
-                      <img src={ref.src} alt="" />
-                      <span>
-                        <Image size={15} />
-                        {ref.title}
-                      </span>
-                    </a>
-                  ))}
-                </div>
-              ) : (
-                <p className="empty-note">
-                  Add image links to <code>VRMMO_INDEX.md</code> and place files in a references folder to populate this shelf.
-                </p>
-              )}
-            </div>
-          </div>
-
-          <article className="reader-panel">
-            {selectedDoc ? (
-              <>
-                <div className="reader-header">
-                  <span className="reader-icon"><SelectedIcon size={22} /></span>
-                  <div>
-                    <p className="eyebrow">{selectedCategory.label}</p>
-                    <h2>{selectedDoc.title}</h2>
-                    <span>{selectedDoc.file}</span>
-                  </div>
-                </div>
-                <div
-                  className="markdown-body"
-                  onClick={(event) => {
-                    const link = event.target.closest("a");
-                    if (!link) return;
-                    const href = link.getAttribute("href") ?? "";
-                    if (!href.startsWith("/doc/")) return;
-                    const slug = decodeURIComponent(href.replace("/doc/", "").replace(/\/$/, ""));
-                    const file = routeDocs[slug] ?? "";
-                    if (!docs.some((doc) => doc.file === file)) return;
-                    event.preventDefault();
-                    openDoc(file);
-                  }}
-                  dangerouslySetInnerHTML={{ __html: renderMarkdown(selectedDoc.markdown) }}
-                />
-              </>
-            ) : (
-              <div className="loading-state">
-                <Moon size={28} />
-                Loading archive...
-              </div>
-            )}
-          </article>
-
-          <aside className="toc-panel">
-            <div className="section-head compact">
-              <div>
-                <p className="eyebrow">Current doc</p>
-                <h2>Table of contents</h2>
-              </div>
-              <Shield size={18} />
-            </div>
-            {selectedDoc?.toc?.length ? (
-              <nav>
-                {selectedDoc.toc.map((item) => (
-                  <a className={item.depth === 3 ? "sub" : ""} href={`#${slugify(item.label)}`} key={`${item.depth}-${item.label}`}>
-                    {item.label}
-                  </a>
-                ))}
-              </nav>
-            ) : (
-              <p className="empty-note">Open a document to reveal its sections.</p>
-            )}
-
-            <div className="mini-system">
-              <Boxes size={18} />
-              <strong>Archive loop</strong>
-              <p>Add docs, update the index, push to GitHub Pages, share the link.</p>
-            </div>
-          </aside>
-        </section>
+        {page === "home" && renderHome()}
+        {page === "devlogs" && renderDevlogs()}
+        {page === "roadmap" && renderRoadmap()}
+        {page === "archive" && renderArchive()}
       </main>
     </div>
   );
