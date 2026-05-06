@@ -26,12 +26,28 @@ import {
 } from "lucide-react";
 import "./styles.css";
 
-const baseUrl = import.meta.env.BASE_URL || "/";
+const baseUrl = "/";
 const docsRoot = `${baseUrl}docs/`;
 const indexFile = "VRMMO_INDEX.md";
 const logoSrc = `${baseUrl}references/cardinal-creation-logo.png`;
 const realmColorSrc = `${baseUrl}references/human-overworld-realm-color.jpeg`;
 const realmSketchSrc = `${baseUrl}references/human-overworld-realm-sketch.png`;
+
+const docRoutes = {
+  "VRMMO_DESIGN_BLUEPRINT.md": "design",
+  "VRMMO_INDEX.md": "index",
+  "WORLD_AND_RENDERING.md": "world",
+  "TECHNICAL_ARCHITECTURE.md": "tech",
+  "DIEGETIC_UI_CARDINAL_AND_VITAE.md": "ui",
+  "COMBAT_MAGIC.md": "magic",
+  "COMBAT_MELEE.md": "melee",
+  "COMBAT_RANGED.md": "ranged",
+  "ITEMIZATION_SPELLSTONES_AND_CRAFTING.md": "items",
+  "DEMON_EYES_AND_REPUTATION.md": "demon-eyes",
+  "PROGRESSION_BALANCE_AND_ROADMAP.md": "roadmap"
+};
+
+const routeDocs = Object.fromEntries(Object.entries(docRoutes).map(([file, slug]) => [slug, file]));
 
 const fallbackDocs = [
   "VRMMO_DESIGN_BLUEPRINT.md",
@@ -141,9 +157,28 @@ function inlineMarkdown(text) {
     .replace(/`([^`]+)`/g, "<code>$1</code>")
     .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_full, label, href) => {
-      const safeHref = href.endsWith(".md") ? `#doc=${encodeURIComponent(href.split("/").pop())}` : href;
+      const file = href.endsWith(".md") ? href.split("/").pop() : "";
+      const safeHref = file ? getDocPath(file) : href;
       return `<a href="${safeHref}">${label}</a>`;
     });
+}
+
+function getDocPath(file) {
+  return `/doc/${docRoutes[file] ?? slugify(file.replace(/\.md$/i, ""))}`;
+}
+
+function getFileFromLocation(docs = []) {
+  const legacyHash = new URLSearchParams(window.location.hash.replace(/^#/, "")).get("doc");
+  if (legacyHash) return legacyHash;
+
+  const routeMatch = window.location.pathname.match(/\/doc\/([^/]+)\/?$/);
+  if (routeMatch) return routeDocs[decodeURIComponent(routeMatch[1])] ?? "";
+
+  const knownPath = window.location.pathname.replace(/^\/+|\/+$/g, "");
+  if (!knownPath || knownPath === "index.html") return "";
+
+  const directFile = docs.find((doc) => slugify(doc.title) === knownPath || doc.file.toLowerCase() === `${knownPath}.md`);
+  return directFile?.file ?? "";
 }
 
 function renderTable(lines) {
@@ -303,7 +338,7 @@ function App() {
 
       setIndexMarkdown(indexText);
       setDocs(loaded);
-      const requested = new URLSearchParams(window.location.hash.replace(/^#/, "")).get("doc");
+      const requested = getFileFromLocation(loaded);
       setSelectedFile(requested && loaded.some((doc) => doc.file === requested) ? requested : loaded[0]?.file ?? "");
     }
 
@@ -316,20 +351,27 @@ function App() {
 
   useEffect(() => {
     if (selectedDoc) {
-      window.history.replaceState(null, "", `#doc=${encodeURIComponent(selectedDoc.file)}`);
+      const expectedPath = getDocPath(selectedDoc.file);
+      if (window.location.pathname !== expectedPath) {
+        window.history.replaceState(null, "", expectedPath);
+      }
     }
   }, [selectedDoc]);
 
   useEffect(() => {
-    const syncFromHash = () => {
-      const requested = new URLSearchParams(window.location.hash.replace(/^#/, "")).get("doc");
+    const syncFromLocation = () => {
+      const requested = getFileFromLocation(docs);
       if (requested && docs.some((doc) => doc.file === requested)) {
         setSelectedFile(requested);
       }
     };
 
-    window.addEventListener("hashchange", syncFromHash);
-    return () => window.removeEventListener("hashchange", syncFromHash);
+    window.addEventListener("hashchange", syncFromLocation);
+    window.addEventListener("popstate", syncFromLocation);
+    return () => {
+      window.removeEventListener("hashchange", syncFromLocation);
+      window.removeEventListener("popstate", syncFromLocation);
+    };
   }, [docs]);
 
   const enrichedDocs = useMemo(
@@ -355,12 +397,13 @@ function App() {
   const openDoc = (file) => {
     setSelectedFile(file);
     setSidebarOpen(false);
+    window.history.pushState(null, "", getDocPath(file));
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const copyDocLink = async () => {
     if (!selectedDoc) return;
-    const url = `${window.location.origin}${window.location.pathname}#doc=${encodeURIComponent(selectedDoc.file)}`;
+    const url = `${window.location.origin}${getDocPath(selectedDoc.file)}`;
     await navigator.clipboard?.writeText(url);
   };
 
@@ -540,8 +583,9 @@ function App() {
                     const link = event.target.closest("a");
                     if (!link) return;
                     const href = link.getAttribute("href") ?? "";
-                    if (!href.startsWith("#doc=")) return;
-                    const file = decodeURIComponent(href.replace("#doc=", ""));
+                    if (!href.startsWith("/doc/")) return;
+                    const slug = decodeURIComponent(href.replace("/doc/", "").replace(/\/$/, ""));
+                    const file = routeDocs[slug] ?? "";
                     if (!docs.some((doc) => doc.file === file)) return;
                     event.preventDefault();
                     openDoc(file);
