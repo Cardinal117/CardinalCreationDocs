@@ -482,7 +482,7 @@ function App() {
 
       if (event.key.toLowerCase() === "f") {
         event.preventDefault();
-        setReaderWide(true);
+        setReaderWide((value) => !value);
       }
 
       if (event.key === "Escape") {
@@ -742,9 +742,9 @@ function App() {
               <div className="reader-header">
                 <span className="reader-icon"><SelectedIcon size={22} /></span>
                 <div><p className="eyebrow">{selectedCategory.label}</p><h2>{selectedDoc.title}</h2><span>{selectedDoc.file}</span></div>
-                <button className="reader-toggle" type="button" onClick={() => setReaderWide((value) => !value)} title={readerWide ? "Return to normal reader width (Esc)" : "Widen reader panel (F)"}>
+                <button className="reader-toggle" type="button" onClick={() => setReaderWide((value) => !value)} title={readerWide ? "Return to normal reader width (F or Esc)" : "Widen reader panel (F)"}>
                   {readerWide ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
-                  <span>{readerWide ? "Normal Esc" : "Focus F"}</span>
+                  <span>{readerWide ? "Normal F/Esc" : "Focus F"}</span>
                 </button>
               </div>
               <div
