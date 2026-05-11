@@ -36,6 +36,7 @@ import {
 import "./styles.css";
 
 const baseUrl = "/";
+const visualHubBase = "https://visual-hub.mistakestudios.com";
 const docsRoot = `${baseUrl}docs/`;
 const indexFile = "VRMMO_INDEX.md";
 const logoSrc = `${baseUrl}references/cardinal-creation-logo.png`;
@@ -154,6 +155,42 @@ const categoryRules = [
   { key: "planning", label: "Planning", icon: Compass, words: ["PROGRESSION", "BALANCE", "ROADMAP"] },
   { key: "master", label: "Master", icon: Archive, words: ["BLUEPRINT", "INDEX"] }
 ];
+
+const combatBridges = {
+  "COMBAT_MAGIC.md": {
+    key: "magic",
+    label: "Magic Combat",
+    tagline: "Ritual, selection, and delivery.",
+    summary:
+      "A mage physically handles knowledge under pressure: the grimoire stores spells, the staff or wand shapes release, and optional incantations add expressive modifiers.",
+    overview: `${visualHubBase}/magic/overview`,
+    showcase: `${visualHubBase}/magic/showcase`,
+    icon: Wand2,
+    points: ["Grimoire page selection", "Study and combat casting", "Optional incantation modifiers"]
+  },
+  "COMBAT_MELEE.md": {
+    key: "melee",
+    label: "Melee Combat",
+    tagline: "Skills are performed, not selected.",
+    summary:
+      "Melee turns the player's body into the input system through stance, grip, hold duration, release velocity, and weapon-specific combat identity.",
+    overview: `${visualHubBase}/melee/overview`,
+    showcase: `${visualHubBase}/melee/showcase`,
+    icon: Swords,
+    points: ["Readable stance recognition", "Charge and release timing", "Weapon-specific techniques"]
+  },
+  "COMBAT_RANGED.md": {
+    key: "ranged",
+    label: "Ranged Combat",
+    tagline: "Trajectory mastery and recall timing.",
+    summary:
+      "Archers choose quivers, draw forms, and trajectory paths, then commit arrows into the battlefield until the right moment to recall them.",
+    overview: `${visualHubBase}/ranged/overview`,
+    showcase: `${visualHubBase}/ranged/showcase`,
+    icon: Crosshair,
+    points: ["Quiver and draw form formula", "Range vision and curving shots", "World-persistent recall ammo"]
+  }
+};
 
 function titleFromFile(file) {
   return file
@@ -489,6 +526,7 @@ function App() {
   const [category, setCategory] = useState("all");
   const [indexMarkdown, setIndexMarkdown] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [visualModal, setVisualModal] = useState(null);
 
   useEffect(() => {
     async function loadDocs() {
@@ -592,12 +630,30 @@ function App() {
   const selectedCategory = selectedDoc ? docCategory(selectedDoc) : categoryRules[0];
   const SelectedIcon = selectedCategory.icon;
   const previewType = getPreviewType(selectedDoc?.file);
+  const selectedCombatBridge = selectedDoc ? combatBridges[selectedDoc.file] : null;
+  const combatBridgeList = Object.values(combatBridges);
 
   const openDoc = (file) => {
     setSelectedFile(file);
     setPage("archive");
     setSidebarOpen(false);
     window.history.pushState(null, "", getDocPath(file));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const openCategory = (nextCategory) => {
+    const nextDoc =
+      nextCategory === "all"
+        ? enrichedDocs[0]
+        : enrichedDocs.find((doc) => doc.category.key === nextCategory);
+
+    setCategory(nextCategory);
+    if (nextDoc) {
+      setSelectedFile(nextDoc.file);
+    }
+    setPage("archive");
+    setSidebarOpen(false);
+    window.history.pushState(null, "", "/archive");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -617,6 +673,58 @@ function App() {
     if (!selectedDoc) return;
     const url = `${window.location.origin}${getDocPath(selectedDoc.file)}`;
     await navigator.clipboard?.writeText(url);
+  };
+
+  const openVisualModal = (bridge, mode = "overview") => {
+    setVisualModal({
+      title: `${bridge.label} ${mode === "overview" ? "Quick Overview" : "Full Showcase"}`,
+      url: mode === "overview" ? bridge.overview : bridge.showcase
+    });
+  };
+
+  const closeVisualModal = () => {
+    setVisualModal(null);
+  };
+
+  const renderCombatActions = (bridge, docFile) => (
+    <div className="combat-actions">
+      <button className="primary-link" type="button" onClick={() => openVisualModal(bridge, "overview")}>
+        <PlayCircle size={18} />
+        Watch Quick Overview
+      </button>
+      <button className="ghost-button" type="button" onClick={() => openVisualModal(bridge, "showcase")}>
+        <Sparkles size={17} />
+        Full Showcase
+      </button>
+      {docFile && (
+        <button className="ghost-button" type="button" onClick={() => openDoc(docFile)}>
+          <FileText size={17} />
+          Read Spec
+        </button>
+      )}
+    </div>
+  );
+
+  const renderCombatBridge = (bridge) => {
+    const BridgeIcon = bridge.icon;
+    return (
+      <section className={`combat-doc-bridge combat-${bridge.key}`}>
+        <div className="combat-bridge-icon">
+          <BridgeIcon size={26} />
+        </div>
+        <div>
+          <p className="eyebrow">Combat visual hub</p>
+          <h2>{bridge.tagline}</h2>
+          <p>{bridge.summary}</p>
+          <ul>
+            {bridge.points.map((point) => (
+              <li key={point}>{point}</li>
+            ))}
+          </ul>
+          {renderCombatActions(bridge)}
+        </div>
+      </section>
+    );
   };
 
   const renderHome = () => (
@@ -666,6 +774,41 @@ function App() {
             </button>
           );
         })}
+      </section>
+
+      <section className="combat-system-band">
+        <div className="section-head combat-head">
+          <div>
+            <p className="eyebrow">Combat systems</p>
+            <h2>Skim the idea here, then watch it move in the visual hub.</h2>
+          </div>
+          <a className="ghost-button" href={visualHubBase} target="_blank" rel="noreferrer">
+            <PlayCircle size={17} />
+            Open Visual Hub
+          </a>
+        </div>
+        <div className="combat-card-grid">
+          {combatBridgeList.map((bridge) => {
+            const BridgeIcon = bridge.icon;
+            const docFile = Object.keys(combatBridges).find((file) => combatBridges[file] === bridge);
+            return (
+              <article className={`combat-card combat-${bridge.key}`} key={bridge.key}>
+                <span className="combat-bridge-icon"><BridgeIcon size={22} /></span>
+                <div>
+                  <p className="eyebrow">{bridge.label}</p>
+                  <h3>{bridge.tagline}</h3>
+                  <p>{bridge.summary}</p>
+                  <ul>
+                    {bridge.points.map((point) => (
+                      <li key={point}>{point}</li>
+                    ))}
+                  </ul>
+                </div>
+                {renderCombatActions(bridge, docFile)}
+              </article>
+            );
+          })}
+        </div>
       </section>
 
       <section className="signal-band">
@@ -826,6 +969,7 @@ function App() {
                   <span>{readerWide ? "Normal F/Esc" : "Focus F"}</span>
                 </button>
               </div>
+              {selectedCombatBridge && renderCombatBridge(selectedCombatBridge)}
               <div
                 className="markdown-body"
                 onClick={(event) => {
@@ -855,6 +999,17 @@ function App() {
             <p className="empty-note">Open a document to reveal its sections.</p>
           )}
           <MotionPreview type={previewType} />
+          {selectedCombatBridge && (
+            <div className="mini-system visual-hub-link">
+              <PlayCircle size={18} />
+              <strong>Visual companion</strong>
+              <p>Open the quick overview or full animated showcase on visual-hub.mistakestudios.com.</p>
+              <div className="mini-actions">
+                <button type="button" onClick={() => openVisualModal(selectedCombatBridge, "overview")}>Overview</button>
+                <button type="button" onClick={() => openVisualModal(selectedCombatBridge, "showcase")}>Showcase</button>
+              </div>
+            </div>
+          )}
           <div className="mini-system"><Boxes size={18} /><strong>Archive loop</strong><p>Add docs, update the index, push to GitHub Pages, share the link.</p></div>
         </aside>
       </section>
@@ -900,14 +1055,14 @@ function App() {
 
         <div className="category-list">
           <p className="rail-label">Archive Filters</p>
-          <button className={category === "all" ? "active" : ""} type="button" onClick={() => setCategory("all")} title="All Systems" data-tip="All Systems">
+          <button className={category === "all" ? "active" : ""} type="button" onClick={() => openCategory("all")} title="All Systems" data-tip="All Systems">
             <Layers3 size={17} />
             <span>All Systems</span>
           </button>
           {categoryRules.map((rule) => {
             const Icon = rule.icon;
             return (
-              <button className={category === rule.key ? "active" : ""} type="button" key={rule.key} onClick={() => setCategory(rule.key)} title={rule.label} data-tip={rule.label}>
+              <button className={category === rule.key ? "active" : ""} type="button" key={rule.key} onClick={() => openCategory(rule.key)} title={rule.label} data-tip={rule.label}>
                 <Icon size={17} />
                 <span>{rule.label}</span>
               </button>
@@ -931,6 +1086,10 @@ function App() {
             <h1>{page === "home" ? "Mistake Studios" : page === "devlogs" ? "Dev Logs" : page === "roadmap" ? "Roadmap" : "Cardinal Creation Design Library"}</h1>
           </div>
           <div className="top-actions">
+            {page === "archive" && selectedCombatBridge && <button className="ghost-button" type="button" onClick={() => openVisualModal(selectedCombatBridge, "overview")}>
+              <PlayCircle size={17} />
+              Visual Hub
+            </button>}
             {page === "archive" && <a className="ghost-button" href={`${docsRoot}${selectedDoc?.file ?? indexFile}`} target="_blank" rel="noreferrer">
               <FileText size={17} />
               Source
@@ -946,6 +1105,29 @@ function App() {
         {page === "roadmap" && renderRoadmap()}
         {page === "archive" && renderArchive()}
       </main>
+      {visualModal && (
+        <div className="visual-modal" role="dialog" aria-modal="true" aria-label={visualModal.title}>
+          <button className="visual-modal-backdrop" type="button" onClick={closeVisualModal} aria-label="Close visual hub preview" />
+          <div className="visual-modal-panel">
+            <div className="visual-modal-header">
+              <div>
+                <p className="eyebrow">Visual hub preview</p>
+                <h2>{visualModal.title}</h2>
+              </div>
+              <div className="visual-modal-actions">
+                <a className="ghost-button" href={visualModal.url} target="_blank" rel="noreferrer">
+                  Open Full Page
+                </a>
+                <button className="reader-toggle" type="button" onClick={closeVisualModal} aria-label="Close visual hub preview">
+                  <X size={18} />
+                  <span>Close</span>
+                </button>
+              </div>
+            </div>
+            <iframe title={visualModal.title} src={visualModal.url} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
